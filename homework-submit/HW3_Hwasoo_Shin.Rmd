@@ -1,0 +1,259 @@
+---
+title: "Homework 3"
+author: "Hwasoo Shin"
+date: '2019 9 6 '
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem 3
+
+ First of all, I think Github will help me to save back-up files easily. Second, when I want to share my data or work with other people, it will be helpful to use functions in Github. Also, once you know how to use version control (especially in Git), I will be able to compare and add files through syntax.
+ 
+## Problem 4
+
+### Sensory Data
+
+First we should see how the data looks like, and clean it.
+
+```{r warning = FALSE}
+library(stringr) #We should get this package to use function 'word'
+k<-readLines('Sensory.txt')
+#Reading the lines in Sensory Data
+k #How data looks like.
+#The first line will be the variable names, and for each 3 rows there are items and list
+kname<-k[2]
+kname<-word(kname,1:6,sep=' ')
+#Get the names of the variables
+kk<-k[-c(1,2)]
+kmat<-matrix(0,nrow=30,ncol=5)
+for(i in 1:30){
+if(i%%3==1){kmat[i,]<-as.numeric(word(kk[i],2:6))}
+if(i%%3!=1){kmat[i,]<-as.numeric(word(kk[i],1:5))}
+} #Getting each value for variables
+kmat2<-cbind(rep(1:10,each=3),kmat) #Add Item number on the matrix
+Sensory<-data.frame(kmat2) #Change the type of data from matrix to data frame
+colnames(Sensory)<-kname #Name variables
+Sensory[1:9,1:6]
+#Cleand data
+SensoryItem<-matrix(0,15,10) #We can also make variables with each item
+for(i in 1:10){
+SensoryItem[,i]<-as.vector(as.matrix(Sensory[which(Sensory$Item==i),2:6]))
+}
+SensoryItem<-data.frame(SensoryItem) #Change the type of data
+colnames(SensoryItem)<-paste("Item",sep='',1:10) #Make names for each variable
+SensoryItem[1:6,1:8]
+#This is the data which variables are each item
+```
+
+Second, we can do some analysis about the data.
+
+```{r}
+Sensory2<-Sensory[,-1]
+summary(Sensory2) 
+#This is the summary of each variable
+```
+
+We can see our cleaned data.
+
+```{r}
+summary(SensoryItem)
+#And we can also find the summary of each item as well
+```
+
+We can see the distribution of each list. Although there are some differences between plots, the distributions don't differ a lot.
+
+```{r}
+par(mfcol=c(1,5)) #We will put 5 plots on one window
+for(i in 1:5){
+boxplot(Sensory2[,i],boxlwd=2,boxwex=1.5,col=rgb(0.2*i,0.6,0.6),main=paste('List',i)) #We are making plots for each variable
+}
+#This is the boxplot of each variable. We can see how the data is distributed
+par(mfrow=c(2,5)) #We will put 10 plots for each plot of an item
+for(i in 1:10){
+boxplot(SensoryItem[,i],boxlwd=2,boxwex=1.5,outcol='red',col=rgb(0.5,0.1*i,0.8),main=paste('Item',i)) #Making plots for each item
+}
+#This is the boxplot of each item. We can see how the data is distributed
+```
+
+We can see the distribution by each item. We can see that there are some differences between plots; values of Item 8 are usually bigger than other items. On the other hand, values of Item 7 are usually smaller than other items.
+
+### Long Jump Data
+
+First, we will import the Long Jump Dataset. Since the data is aligned in one line, we will use readLines to read the text file instead of read.table.
+
+```{r warning=FALSE}
+k<-readLines('LongJumpData.dat.txt')
+#We will get the text file and read by lines
+l<-character()
+#Making an empty vector
+k<-k[-1]
+#We will skip the first line that we got from readling text file
+for(i in 1:6){
+kw<-word(k[i],1:10) #Extracting all the words in each line
+kw<-kw[!is.na(kw)==TRUE] #If nothing was extracted, we won't pull that data
+l<-c(l,kw) #Adding the values from previous steps to assigned vector
+}
+length(l) #Number of observations
+idx1<-seq(1,44,by=2) #Odd numbers from 1 to 44 
+idx2<-seq(2,44,by=2) #Even numbers from 2 to 44
+Year<-l[idx1] #Assign odd number order obersvations to variable 'Year'
+Long_Jump<-l[idx2] #Assign even number order obersvations to variable 'Long_Jump'
+LongJumpData<-data.frame(Year,Long_Jump) #Make Year and Long_Jump variable into data frame
+```
+
+Through the steps above, we are able to import data to R
+
+```{r}
+LongJumpData$Year<-as.numeric(as.character(LongJumpData$Year)) 
+#Changing the type of variable from factor to numeric 
+LongJumpData$Year<-LongJumpData$Year+1900
+#Added 1900 since the vector is centered in 1900
+LongJumpData$Long_Jump<-as.numeric(as.character(LongJumpData$Long_Jump))
+#Changing the type of variable from factor to numeric 
+summary(LongJumpData)
+```
+
+Above is the summary of Long Jump Data. We can see how two variables are distributed.
+We can also find how two variables are related through scatterplot and a regression line.
+
+```{r}
+plot(LongJumpData$Year,LongJumpData$Long_Jump,xlab='Year',ylab='Jump Distance',main='Long Jump Data',
+pch=19,cex.main=1.5) #Making a scatterplot. The y-variable will the the distance of jump and x-axis will be year.
+abline(lm(LongJumpData$Long_Jump~LongJumpData$Year),col='green',lwd=2) #Making a regression line. lm is a function for making a regression line, and abline will draw the line using the coefficients we got from lm function.
+```
+we can see that the regression line is made in increasing direction, which is, as time goes by the distance of jump has increased.
+
+
+### Brain and Body Data
+
+We can use the text file to read the data.
+
+```{r}
+k<-readLines('BrainandBodyWeight.dat.txt')
+#Read every line in text file.
+k<-k[-1]
+#Remove the first line we read, which is the names of variable
+l<-numeric()
+#Make an empty numeric vector
+for(i in 1:22){
+kw<-as.numeric(word(k[i],1:10,sep=' ')) #Extract every word in the line
+kw<-kw[is.na(kw)==FALSE]
+l<-c(l,kw) #Put the words extracted into a vector
+}
+length(l) #Number of observations
+idx1<-seq(1,124,by=2) #Getting odd numbers from 1 to 124
+idx2<-seq(2,124,by=2) #Getting even numbers from 2 to 124
+BrainWt<-l[idx2] #The values in odd number order will be Brain weight
+BodyWt<-l[idx1] #The values in even number order will be Body weight
+BrainBody<-data.frame(BodyWt,BrainWt) #Make two variables into a data frame
+```
+
+Through the steps above, we are able to make a data frame. We can get the summary of each variable and relation through this.
+
+```{r}
+summary(BrainBody)
+#This is the summary of two variables; brain weight and body weight
+plot(BrainBody$BodyWt,BrainBody$BrainWt)
+#There are some extreme values. We can remove them and plot it again.
+BrainBody2<-BrainBody
+#Duplicate the data frame
+BrainBody2<-BrainBody2[which(BrainBody$BodyWt<1000&BrainBody$BrainWt<1000),]
+#The dupliated data frame will only have values that BodyWt and BrainWt variables are both less than 1000.
+plot(BrainBody2,pch=19,main='Plot of Body and Brain Weight',cex.main=1.5)
+abline(lm(data=BrainBody2,BrainWt~BodyWt),col='green',lwd=2)
+#The scatter plot for two variables in modified data frame. We can also draw a regression line over the scatterplot. 
+```
+From the data above, we can conclude that the brain weight and body weight are postively correlated. Also, since the tangent of regression line is positive, we can learn that the brain weight will increase when body weight increases.
+
+### Tomato data
+
+Since the data is not cleaned but has only a few observations, we will type the data to get the variables and values
+
+```{r}
+k<-readLines('tomato.dat.txt')
+#Read every line in tomato.dat text file
+k
+#Read the values. The data is messy but only has a few observations
+V1<-c(16.1,15.3,17.5,8.1,8.6,10.1)
+V2<-c(16.6,19.2,18.5,12.7,13.7,11.5)
+V3<-c(20.8,18.0,12.0,14.4,15.4,13.7)
+#Enter values to make a variable.
+tomato<-data.frame(V1,V2,V3)
+#Make 3 variables above into a data frame
+colnames(tomato)<-c('10k','20k','30k')
+#The variable names will be 10k, 20k and 30k respectively
+Ife<-paste('Ife#1',1:3,sep='')
+Pursa<-paste('PursaEarlyDwarf',1:3,sep='')
+#We can also make row names for the data frame. Each will be Ife1, Ife2, Ife3, PursaEarlyDwarf1,PursaEarlyDwarf2, and PursaEarlyDwarf3
+rownames(tomato)<-c(Ife,Pursa)
+#Put rownames for the data
+tomato
+#This is the data frame we obtained. Since there were multiple data on one cell, we will put this into different cell in data frame.
+```
+Through these steps we are able to write the tomato data file. For analysis, we can use the following syntax.
+
+```{r}
+summary(tomato)
+#We can see the summary of each variable; 10k, 20k and 30k
+```
+However, we can also make this data frame that has variables for each tomato brand
+```{r}
+Ife<-as.vector(as.matrix(tomato[1:3,]))
+Pursa<-as.vector(as.matrix(tomato[4:6,]))
+#Assign values for tomato brands variables
+summary(Ife) #Summary of tomato brand 'Ife'
+summary(Pursa) #Summary of tomato brand 'PursaEarlyDwarf'
+plot(tomato[,1],rep(-1,6),ylim=c(-1.5,1.5),col='red',cex=2,pch=19,yaxt='n',xlim=c(8,21),
+main='Points by 10k, 20k, and 30k',cex.main=1.5,ylab='',xlab='value')
+points(tomato[,2],rep(0,6),ylim=c(-1.5,1.5),col='orange',cex=2,pch=19) #Make a plot for the first variable, 10k
+points(tomato[,3],rep(1,6),ylim=c(-1.5,1.5),col='green',cex=2,pch=19) #Plot points of second variable on the existing plot
+legend('topleft',fill=c('red','orange','green'),legend=c('10k','20k','30k')) #Plot points of thrid variable on the existing plot
+#This is the plot of how the values by 3 factor 10k, 20k and 30k are distributed.
+plot(Ife,rep(-1,9),ylim=c(-1.5,1.5),col='red',cex=2,pch=19,yaxt='n',xlim=c(8,21),
+main='Points by 10k, 20k, and 30k',cex.main=1.5,ylab='',xlab='value') #Make a plot for Ife tomato brand
+points(Pursa,rep(1,9),ylim=c(-1.5,1.5),col='green',cex=2,pch=19,yaxt='n') #Plot points from PursaEarlyDwarf tomato brand data
+legend('topright',fill=c('red','green'),legend=c('Ife','PursaEarlyDwarf'))
+#We can also make a plot of how the values by 2 tomato brands Ife, PursaEarlyDwarf are distributed
+```
+
+
+## Problem 5
+
+First we should read the raw data to look how the data looks like. To acheive this, we can try the following steps.
+```{r}
+plants<-read.table('C:/Users/pc/Desktop/HWASOO/STUDY/StatPackage/plants.txt',header=T)
+#We can read the text file using read.table function
+summary(plants)
+```
+We can see there are many NAs in the data. In this case, we are trying to use 3 variables, which are pH_max, pH_min and Foliage_color. Therefore we will retrieve data that has no NAs in these variables to do the ANOVA test and make a scatterplot.
+```{r}
+#Since we are looking for relation between pH and foliage color, we will get data which pH_Min and pH_Max are all available.
+plants1<-plants[is.na(plants$pH_Min)==FALSE&is.na(plants$pH_Max)==FALSE,]
+plants1$pHRange<-plants1$pH_Max-plants1$pH_Min
+#Range of pH
+```
+Through these steps, we can first read the raw data and then get the data we need, which is, the data with pH variables with not NAs. We can check the modified data.
+```{r}
+summary(plants1) #Summary of the modified data.
+```
+Notice that there are no more NA values in pH variables and now the pH range variable is added to the data frame.We can also make a plot to check the relationship between minimum and maximum pH.
+```{r}
+plot(plants1$pH_Min,plants1$pH_Max,pch=19,xlab='pH_Min',ylab='pH_Max',
+main='Plot of maximum and minimum of pH',cex.main=1.5)
+lm(data=plants1,pH_Max~pH_Min)
+#The pH_Min is the independent variable and pH_Max is the target variable
+#The first value is the intercept, and second value is the tangent of the line
+abline(lm(data=plants1,pH_Max~pH_Min),lwd=2,col='green')
+
+summary(aov(data=plants1,pHRange~Foliage_Color))
+#Summary of ANOVA. 
+```
+We can see that the degree of freedom of Foliage Color is 5, which means there are 6 classes in Foliage_Color. To use ANOVA, some assumptions are required; Variance among classes are the same. Since the p-value for this ANOVA test is smaller than 0.05, we can conclude that there are at least two classes of Foliage_Color that have different means of pH range under significance level $\alpha$=0.05.
+
